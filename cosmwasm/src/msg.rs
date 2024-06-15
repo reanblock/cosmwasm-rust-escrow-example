@@ -3,6 +3,7 @@ use cosmwasm_std::Uint128;
 use cw20::Cw20ReceiveMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[cw_serde]
 pub struct InstantiateMsg {

@@ -1,7 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    from_binary, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    from_json, to_json_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
 };
 use cw20::Cw20ReceiveMsg;
 
@@ -54,7 +54,7 @@ pub fn receive_cw20(
     info: MessageInfo,
     cw20_msg: Cw20ReceiveMsg,
 ) -> Result<Response, ContractError> {
-    match from_binary(&cw20_msg.msg) {
+    match from_json(&cw20_msg.msg) {
         Ok(Cw20HookMsg::Escrow { time }) => execute_escrow(
             deps,
             env,
@@ -69,13 +69,11 @@ pub fn receive_cw20(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+    println!("in query: {:?}", msg);
     match msg {
-        QueryMsg::Config {} => to_binary(&query_config(deps)?),
+        QueryMsg::Config {} => to_json_binary(&query_config(deps)?),
         QueryMsg::Escrow { address } => {
-            to_binary(&query_escrow(deps, deps.api.addr_validate(&address)?)?)
+            to_json_binary(&query_escrow(deps, deps.api.addr_validate(&address)?)?)
         }
     }
 }
-
-#[cfg(test)]
-mod tests {}

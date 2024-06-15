@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, Addr, CosmosMsg, DepsMut, Env, Response, Uint128, WasmMsg};
+use cosmwasm_std::{to_json_binary, Addr, CosmosMsg, DepsMut, Env, Response, Uint128, WasmMsg};
 use cw20::Cw20ExecuteMsg;
 
 use crate::error::ContractError;
@@ -47,7 +47,7 @@ pub fn execute_redeem(deps: DepsMut, env: Env, user: Addr) -> Result<Response, C
 
     let msg = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: config.token.to_string(),
-        msg: to_binary(&Cw20ExecuteMsg::Transfer {
+        msg: to_json_binary(&Cw20ExecuteMsg::Transfer {
             recipient: user.to_string(),
             amount: escrow.amount,
         })?,

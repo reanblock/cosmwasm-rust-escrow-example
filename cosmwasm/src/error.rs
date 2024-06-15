@@ -9,10 +9,10 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
-    #[error("Use has existing escrow")]
+    #[error("User has existing escrow")]
     ExistingEscrow {},
 
-    #[error("Use has no existing escrow")]
+    #[error("User has no existing escrow")]
     NoExistingEscrow {},
 
     #[error("Escrow has not expired")]

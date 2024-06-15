@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, Addr, Empty, Uint128};
+use cosmwasm_std::{to_json_binary, Addr, Empty, StdError, Uint128};
 use cw20::{BalanceResponse, Cw20Coin, Cw20ExecuteMsg, Cw20QueryMsg, MinterResponse};
 use cw_multi_test::{App, Contract, ContractWrapper, Executor};
 
@@ -17,7 +17,7 @@ fn test_escrow_and_redeem() {
 
     // upload the contracts
     let escrow_id = router.store_code(contract_escrow());
-    let usdc_id = router.store_code(contract_cw20());
+    let usdc_id: u64 = router.store_code(contract_cw20());
 
     // instantiate the contracts
     let usdc_addr = router
@@ -72,22 +72,31 @@ fn test_escrow_and_redeem() {
     assert_eq!(res.owner, owner);
     assert_eq!(res.token, usdc_addr.to_string());
 
+    // now the cw20 and escrow contracts are deployed an initialized we can run actual some tests!
+
     // escrow funds into the contract
     let msg = Cw20ExecuteMsg::Send {
+        // to the escrow contract
         contract: escrow_addr.to_string(),
+        // send 100 USDC 
         amount: Uint128::from(100u128),
-        msg: to_binary(&Cw20HookMsg::Escrow { time: 10 }).unwrap(),
+        // with this hook message
+        msg: to_json_binary(&Cw20HookMsg::Escrow { time: 10 }).unwrap(),
     };
 
     let res = router
         .execute_contract(alice.clone(), usdc_addr.clone(), &msg, &[])
         .unwrap();
+    // printing out to view in console for debug
+    // println!("res.events[3]: {:?}", res.events[3]);
     assert_eq!("escrow", res.events[3].attributes[1].value);
 
-    // duplicate escrow should fail
-    router
+    // duplicate escrow should fail (ContractError::ExistingEscrow)
+    let err = router
         .execute_contract(alice.clone(), usdc_addr.clone(), &msg, &[])
         .unwrap_err();
+    // printing out the error to view for debug
+    // print!("err: {:?}", err);
 
     // check contract balance
     let msg = Cw20QueryMsg::Balance {
@@ -108,6 +117,17 @@ fn test_escrow_and_redeem() {
         .unwrap();
     assert_eq!(res.amount, Uint128::from(100u128));
     assert_eq!(res.time, 1571797429u64);
+
+    let msg_bob = QueryMsg::Escrow {
+        address: bob.to_string(),
+    };
+
+    // check there is no escrow for Bob in the contract (will return a StdError)
+    let err: Result<EscrowResponse, StdError> = router
+        .wrap()
+        .query_wasm_smart(escrow_addr.clone(), &msg_bob);
+
+    print!("err: {:?}", err);
 
     // redeem funds from the escrow
     let msg = ExecuteMsg::Redeem {};

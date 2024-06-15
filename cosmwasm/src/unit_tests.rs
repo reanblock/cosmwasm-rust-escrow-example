@@ -1,21 +1,22 @@
 use crate::contract::{instantiate, query};
 use crate::msg::{ConfigResponse, InstantiateMsg, QueryMsg};
 
-use cosmwasm_std::from_binary;
+use cosmwasm_std::{from_json};
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 
 #[test]
 fn test_instantiation() {
     let mut deps = mock_dependencies();
+    let info = mock_info("owner", &[]);
     let msg = InstantiateMsg {
         token: "token".to_string(),
     };
-    let info = mock_info("owner", &[]);
-    instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+    // call the actual instantiate function on the contract under test
+    instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
 
     let res = query(deps.as_ref(), mock_env(), QueryMsg::Config {}).unwrap();
-    let config: ConfigResponse = from_binary(&res).unwrap();
-    let info = mock_info("owner", &[]);
+    let config: ConfigResponse = from_json(&res).unwrap();
+    // let info = mock_info("owner", &[]);
     assert_eq!(
         config,
         ConfigResponse {
